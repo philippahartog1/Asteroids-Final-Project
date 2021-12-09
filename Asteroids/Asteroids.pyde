@@ -14,6 +14,33 @@ def draw():
     global startfont
     background(0)
     startscreen()
+    if game_status == 2:
+        for i in range(asts):
+            astt[i].move()
+            astt[i].display()
+
+class asteroidMove(object):
+    def __init__(self, x1, y1, vx1, vy1):
+        self.x = x1
+        self.y = y1
+        self.vx = vx1
+        self.vy = vy1
+    
+    def move(self):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x > 1500 or self.x < -300:
+            self.vx *= -1
+        if self.y > 1300 or self.y < -300:
+            self.vy *= -1
+    def display(self):
+        fill(255)
+        ellipse(self.x, self.y, 50, 50)
+
+asts = 10
+astt = []
+for i in range(asts):
+    astt.append(asteroidMove(3, 4, 5, 5))
 
 def startscreen():
     global startfont
