@@ -2,15 +2,14 @@ add_library('minim')
 import random
 
 game_status = 1 #1 for start screen, 2 for playing, 3 for game over
-playerx = 0
 laserx = 600
-playery = 0
 lasery = 400
-playervy = 0
-playervx = 0
+# playervy = 0
+# playervx = 0
 laservx = 2
 laservy = 2
-r = 0
+head1 = 0
+
 def setup():
     global startfont
     size(1200, 800)
@@ -21,27 +20,17 @@ def setup():
 
 
 def draw():
-    global startfont, playery, playervy, playerx, playervx
+    global startfont, playery, playervy, playerx, playervx, ship
     background(0)
     startscreen()
     if game_status == 2:
         for i in range(asts):
             astt[i].move()
             astt[i].display()
-    player()
-    playery -= playervy
-    playerx -= playervx
-    if playerx < -2000:
-        playerx = 2000
-    elif playerx > 2000:
-        playerx = -2000
-    if playery < -500:
-        playery = 500
-    elif playery > 500:
-        playery = -500
-
-
-
+        ship = Player()
+        ship.display()
+        #ship.turn(90)
+    
 
 class asteroidMove(object):
     def __init__(self, x1, y1, vx1, vy1):
@@ -100,31 +89,26 @@ def mousePressed():
             game_status = 2
 
 def keyPressed():
-    global playery, playervy, playerx, playervx, r
+    global playery, playervy, playerx, playervx, r, ship, head1
     if keyCode == 'UP' or key == 'w':
-        playervy = 3
+        print("ss")
     elif keyCode == 'LEFT' or key == 'a':
-        r -= 2
-    elif keyCode == 'DOWN' or key == 's':
-        playervy = -3
+        head1 -= 0.1
     elif keyCode == 'RIGHT' or key == 'd':
-        r += 2
+        head1 += 0.1
+
+class Player(object):
+    def __init__(self):
+        global head1
+        self.pos = PVector(width/2, height/2)
+        self.r = 10
+        self.head = head1
+    def display(self):
+        translate(self.pos.x, self.pos.y)
+        rotate(self.head)
+        triangle(-self.r, self.r, self.r, self.r, 0, -self.r)
+
+        
+        
+        
     
-def player():
-    if game_status == 2:
-        stroke(255)
-        pushMatrix()
-        translate(width/2, height/2)
-        rotate(radians(r))
-        #tri(200)
-        #triangle(playerx, playery, playerx+10, playery+25, playerx-10, playery+25)
-        line(playerx, playery, playerx + 10, playery +25)
-        line(playerx, playery, playerx - 10, playery +25)
-        line(playerx -10, playery +25, playerx, playery +20)
-        line(playerx +10, playery+25, playerx , playery+20)
-        popMatrix()
-# def tri(length):
-#     triangle(playerx, -playery, -playerx*sqrt(3)/2, playery/2, playerx*sqrt(3)/2, playery/2)        
-        
-        
-            
