@@ -8,12 +8,15 @@ lasery = 400
 # playervx = 0
 laservx = 2
 laservy = 2
-head1 = 0
+head = 0
+
+px = 600
+py = 400
+xspeed = 0
+yspeed = 0
+speed_count = 0
 life_count = 5
-poly = PVector()
-random_poly = []
-for i in range(5):
-    random_poly.append(poly)
+
     
 def setup():
     global startfont, ship
@@ -26,17 +29,21 @@ def setup():
 
 
 def draw():
-    global startfont, playery, playervy, playerx, playervx, ship
+    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed
     background(0)
     startscreen()
     if game_status == 2:
         for i in range(asts):
             astt[i].move()
             astt[i].display()
-            astt[i].update()
-        ship = Player()
+
+        ship = Player(px, py)
         ship.display()
-    
+        py += yspeed
+        px += xspeed
+        speed_count += 1
+        ship_move()
+        
         text(life_count, 200, 200)
 
     
@@ -57,17 +64,7 @@ class asteroidMove(object):
             self.vx *= -1
         if self.y > 800 or self.y < 0:
             self.vy *= -1
-    def update(self):
-        global ship
-        # self.pos.add(self.vel)
-        # print(self.vel)
-        ship = Player()
-        areaOrig = abs( (ship.x2 - ship.x1)*(ship.y3 - ship.y1) - (ship.x3 - ship.x1) *(ship.y2 - ship.y1) )
-        area1 = abs( (ship.x1 - self.x)*(ship.y2 - self.y) - (ship.x2-self.x)*(ship.y1-self.y) )
-        area2 = abs( (ship.x2 - self.x)*(ship.y3 - self.y) - (ship.x3 - self.x)*(ship.y2-self.y) )
-        area3 = abs( (ship.x3 - self.x)*(ship.y1-self.y) - (ship.x1 - self.x)+(ship.y3 - self.y) )
-        if (area1 + area2 + area3) == areaOrig:
-            life_count -= 1
+
 
 class smallAst(asteroidMove):
     def __init__(self, x1, y1, vx1, vy1):
@@ -87,7 +84,7 @@ class smallAst(asteroidMove):
         #ellipse(self.x, self.y, 50, 50)
 
 
-asts = 10
+asts = 20
 astt = []
 for i in range(asts):
     astt.append(smallAst(random.uniform(0,1200), random.uniform(0, 800),random.uniform(0.1, 1), random.uniform(0.1, 1)))
@@ -112,79 +109,78 @@ def startscreen():
         strokeWeight(3)
         noFill()
         rect(400, 550, 360, 60, 7)
-
+        
+        
+def ship_move():
+    global speed_count, px, py, yspeed, xspeed
+    if speed_count > 200 and xspeed < 0:
+        xspeed += 0.5
+        speed_count = 0
+    elif speed_count > 200 and yspeed < 0:
+        yspeed += 0.5
+        speed_count = 0
+    elif speed_count > 200 and xspeed > 0:
+        xspeed -= 0.5
+        speed_count = 0
+    elif speed_count > 200 and yspeed > 0:
+        yspeed -= 0.5
+        speed_count = 0
+    if px < 0:
+        px = 1200
+    if py < 0:
+        py = 800
+    if py > 800:
+        py = 0
+    if px > 1200:
+        px = 0    
+        
+        
 def mousePressed():
     global game_status
     if game_status == 1:
         if (mouseX > 400 and mouseX < 757) and (mouseY > 550 and mouseY < 605):
             game_status = 2
-#vel = PVector(0, 0)
-#force = PVector.fromAngle(head1)
+            
+            
 def keyPressed():
-    global playery, playervy, playerx, playervx, r, ship, head1
-    if keyCode == 'UP' or key == 'w':
-        #ship.boost()
-        pass
-        
+    global head, yspeed, ship, xspeed, speed_count, py, px
+    if key == 'w' or keyCode == UP:
+        if yspeed > -10:
+            yspeed -= 0.5
+        if head < 0 or head > 0:
+            head += 3
+        #xspeed -= 1
+    elif key == 'a' or keyCode == LEFT:
+        if xspeed > -5:
+            xspeed -= 0.5
+        if head > -90:
+            head -= 3
+    elif key == 'd' or keyCode == RIGHT:
+        if xspeed < 5:
+            xspeed += 0.5
+        if head < 90:
+            head += 3
+    elif key == 's' or keyCode == DOWN:
+        if yspeed < 10:
+            yspeed += 0.5
 
-    elif keyCode == 'LEFT' or key == 'a':
-        head1 -= 0.1
-    elif keyCode == 'RIGHT' or key == 'd':
-        head1 += 0.1
-
-
-
-
-# class Player(object):
-#     def __init__(self, vx, vy):
-#         global head1
-#         self.vx = vx
-#         self.vy = vy
-#         self.playerx = 0
-#         self.playery = 0
-#         self.head = head1
-    
-#     def display(self):
-#         translate(600, 400)
-#         rotate(self.head)
-#         line(self.playerx, self.playery, self.playerx + 10, self.playery +25)
-#         line(self.playerx, self.playery, self.playerx - 10, self.playery +25)
-#         line(self.playerx -10, self.playery +25, self.playerx, self.playery +20)
-#         line(self.playerx +10, self.playery+25, self.playerx , self.playery+20)
-    
-        
 class Player(object):
-    def __init__(self):
-        global head1, vel, astt
-        self.pos = PVector(width/2, height/2)
-        self.x1 = 0
-        self.y1 = 0
-        self.x2 = 0
-        self.y2 = 0
-        self.x3 = 0
-        self.y3 = 0
-        self.head = head1
-        self.vel = PVector(0, 0)
+    def __init__(self, px, py):
+        self.x = px
+        self.y = py
+    
     def display(self):
+        noFill()
+        strokeWeight(5)
+        stroke(255)
         pushMatrix()
-        translate(self.pos.x, self.pos.y)
-        rotate(self.head + PI/2)
-        triangle(-self.x1 +10, self.y1 -10, self.x2 - 10, self.y2 -10, self.x3, -self.y3 +10)
-        #triangle(-self.r, self.r, self.r, self.r, 0, -self.r)
+        translate(self.x, self.y)
+        rotate(radians(head))
+        triangle(-10, 15, 0, -15, 10, 15)    
         popMatrix()
-    # def update(self):
-    #     # self.pos.add(self.vel)
-    #     # print(self.vel)
 
 
-    def boost(self):
-        force = PVector.fromAngle(self.head)
-        self.vel.set(0+1, 0+1)
-        print(force)
-        print(self.vel)
-        
 
-        
         
 
         
