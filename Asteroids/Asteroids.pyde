@@ -18,19 +18,23 @@ life_count = 5
 
     
 def setup():
-    global startfont, ship
+    global startfont, ship, hit, title
     size(1200, 800)
     startfont = createFont("OCR A Extended", 16)
     print(startfont)
     frame = frameRate(60)
+    minim = Minim(this)
+    hit = minim.loadSample("hitHurt.wav")
+    title = minim.loadFile("astSong.mp3")
 
 
 
 
 def draw():
-    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed, lx, ly, laservx, laservy, lser, immune_count
+    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed, lx, ly, laservx, laservy, lser, immune_count, ax, ay, game_status
     background(0)
-    startscreen()
+    if game_status == 1:
+        startscreen()
     if game_status == 2:
         for i in range(asts):
             astt[i].move()
@@ -45,8 +49,31 @@ def draw():
         immune_count += 1
         speed_count += 1
         ship_move()
-        text(life_count, 200, 200)
+        fill(255)
+        textSize(30)
+        text("Lives:", 50, 50)
+        life = Life()
+        life.show()
+        #title.pause()
+        if life_count == 0:
+            game_status = 3
+            
+    if game_status == 3:
+        background(0)
 
+            
+
+class Life(object):
+    def __init__(self):
+        global life_count
+        self.x = 175
+        self.y = 45
+    def show(self):
+        for i in range(life_count):
+            stroke(255)
+            noFill()
+            triangle(self.x, self.y, self.x +5, self.y -10, self.x + 10, self.y)
+            self.x += 20
 
     
 
@@ -69,7 +96,7 @@ class asteroidMove(object):
 
 class smallAst(asteroidMove):
     def __init__(self, x1, y1, vx1, vy1, id):
-        global px, py, asts, astt
+        global px, py, asts, astt, hit
         asteroidMove.__init__(self, x1, y1, vx1, vy1, id)
         self.id = id
         
@@ -94,6 +121,7 @@ class smallAst(asteroidMove):
             if dist_squared < 400:
                 if immune_count > 100:
                     life_count -=1
+                    hit.trigger()
                     immune_count = 0
 
 
@@ -104,34 +132,38 @@ for i in range(asts):
 
 class laser(object):
     def __init__(self):
-        global px, py
+        global px, py, head
         self.l = PVector(px, py)
         self.go = PVector(20, 20)
         #self.ly = py
     def laser_show(self):
+        #pushMatrix()
+        #rotate(radians(head))
         stroke(255, 0, 0)
         fill(255, 0, 0)
-        rect(self.l.x, self.l.y, 0.02, 10)
+        rect(px, py, 0.02, 10)
+        #popMatrix()
     def laser_move(self):
         newV = self.l.add(self.go)
         return newV
 
 
+
 def startscreen():
-    global startfont, ship
-    if game_status == 1:
-        background(0)
-        fill(255)
-        textFont(startfont)
-        textSize(100)
-        text("ASTEROIDS", 340, 200)
-        textSize(60)
-        text("PLAY GAME", 420, 600)
-        stroke(255)
-        strokeWeight(3)
-        noFill()
-        rect(400, 550, 360, 60, 7)
-        
+    global startfont, ship, title
+    background(0)
+    fill(255)
+    textFont(startfont)
+    textSize(100)
+    text("ASTEROIDS", 340, 200)
+    textSize(60)
+    text("PLAY GAME", 420, 600)
+    stroke(255)
+    strokeWeight(3)
+    noFill()
+    rect(400, 550, 360, 60, 7)
+    title.play()
+    
         
 def ship_move():
     global speed_count, px, py, yspeed, xspeed
