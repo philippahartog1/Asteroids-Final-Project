@@ -2,14 +2,13 @@ add_library('minim')
 import random
 
 game_status = 1 #1 for start screen, 2 for playing, 3 for game over
-laserx = 600
-lasery = 400
-
 laservx = 0
 laservy = 0
 head = 0
+lhead = 0
 px = 600
 py = 400
+
 immune_count = 100
 xspeed = 0
 yspeed = 0
@@ -31,7 +30,7 @@ def setup():
 
 
 def draw():
-    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed, lx, ly, laservx, laservy, lser, immune_count, ax, ay, game_status
+    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed, laservx, laservy, lser, immune_count, ax, ay, game_status
     background(0)
     if game_status == 1:
         startscreen()
@@ -40,7 +39,10 @@ def draw():
             astt[i].move()
             astt[i].display()
             astt[i].collide()
-
+        
+        al = alien()
+        al.alShow()
+        al.alMove()
         ship = Player(px, py)
         ship.display()
         lser = laser()
@@ -125,29 +127,47 @@ class smallAst(asteroidMove):
                     immune_count = 0
 
 
-asts = 20
+asts = 10
 astt = []
 for i in range(asts):
     astt.append(smallAst(random.uniform(0,1200), random.uniform(0, 800),random.uniform(0.1, 1), random.uniform(0.1, 1), i))
 
 class laser(object):
     def __init__(self):
-        global px, py, head
-        self.l = PVector(px, py)
+        global px, py, head, lhead
+        self.lx = px #PVector(px, py)
+        self.ly = py
         self.go = PVector(20, 20)
         #self.ly = py
     def laser_show(self):
-        #pushMatrix()
-        #rotate(radians(head))
+        pushMatrix()
+        translate(0.01, 5)
+        rotate(radians(lhead))
         stroke(255, 0, 0)
         fill(255, 0, 0)
-        rect(px, py, 0.02, 10)
-        #popMatrix()
+        rect(self.lx, self.ly, 0.02, 10)
+        popMatrix()
     def laser_move(self):
-        newV = self.l.add(self.go)
-        return newV
+        # newV = self.l.add(self.go)
+        # return newV
+        pass
 
-
+class alien(object):
+    def __init__(self):
+        self.ax = 30 #random.randrange(-100, 1300)
+        self.ay = 30 #random.randrange(-100, 900)
+        self.vx = 2
+        self.vy = 2
+    def alShow(self):
+        stroke(255)
+        fill(255)
+        ellipse(self.ax+35, self.ay+25, 40, 10)
+        noFill()
+        curve(self.ax + 20, self.ay + 100, self.ax + 20, self.ay + 20, self.ax + 50, self.ay + 20, self.ax + 60, self.ay + 100)
+    def alMove(self):
+        self.ax += self.vx
+        self.ay += self.vy
+        
 
 def startscreen():
     global startfont, ship, title
@@ -197,25 +217,28 @@ def mousePressed():
             
             
 def keyPressed():
-    global head, yspeed, ship, xspeed, speed_count, py, px, laservy, lser
+    global head, yspeed, ship, xspeed, speed_count, py, px, laservy, lser, lhead
     if key == 'w' or keyCode == UP:
-        if yspeed > -10:
+        if yspeed > -5:
             yspeed -= 0.5
         if head < 0 or head > 0:
             head += 3
+            lhead += 3
         #xspeed -= 1
     elif key == 'a' or keyCode == LEFT:
-        if xspeed > -5:
+        if xspeed > -3:
             xspeed -= 0.5
         if head > -90:
             head -= 3
+            lhead -= 3
     elif key == 'd' or keyCode == RIGHT:
-        if xspeed < 5:
+        if xspeed < 3:
             xspeed += 0.5
         if head < 90:
             head += 3
+            lhead += 3
     elif key == 's' or keyCode == DOWN:
-        if yspeed < 10:
+        if yspeed < 5:
             yspeed += 0.5
     if key == 'p':
         lser.laser_show()
