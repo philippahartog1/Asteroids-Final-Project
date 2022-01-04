@@ -10,9 +10,7 @@ px = 600
 py = 400
 
 immune_count = 100
-xspeed = 0
-yspeed = 0
-speed_count = 0
+
 life_count = 5
 
     
@@ -30,7 +28,7 @@ def setup():
 
 
 def draw():
-    global startfont, ship, yspeed, speed_count, py, px, ship, xspeed, laservx, laservy, lser, immune_count, ax, ay, game_status
+    global startfont, ship, speed_count, py, px, ship,  laservx, laservy, lser, immune_count, ax, ay, game_status, location, velocity, force
     background(0)
     if game_status == 1:
         startscreen()
@@ -45,12 +43,10 @@ def draw():
         al.alMove()
         ship = Player(px, py)
         ship.display()
-        lser = laser()
-        py += yspeed
-        px += xspeed
+        ship.update()
+        ship.col()
+        lser = laser(px, py)
         immune_count += 1
-        speed_count += 1
-        ship_move()
         fill(255)
         textSize(30)
         text("Lives:", 50, 50)
@@ -59,11 +55,10 @@ def draw():
         #title.pause()
         if life_count == 0:
             game_status = 3
-            
     if game_status == 3:
         background(0)
 
-            
+        
 
 class Life(object):
     def __init__(self):
@@ -98,7 +93,7 @@ class asteroidMove(object):
 
 class smallAst(asteroidMove):
     def __init__(self, x1, y1, vx1, vy1, id):
-        global px, py, asts, astt, hit
+        global px, py, asts, astt, hit, location
         asteroidMove.__init__(self, x1, y1, vx1, vy1, id)
         self.id = id
         
@@ -117,10 +112,10 @@ class smallAst(asteroidMove):
     def collide(self):
         global px, py, asts, astt, life_count, immune_count
         for i in range(self.id, asts):
-            dx = self.x - px
-            dy = self.y - py
+            dx = self.x - location.x
+            dy = self.y - location.y
             dist_squared = dx * dx + dy * dy
-            if dist_squared < 400:
+            if dist_squared < 500:
                 if immune_count > 100:
                     life_count -=1
                     hit.trigger()
@@ -133,25 +128,23 @@ for i in range(asts):
     astt.append(smallAst(random.uniform(0,1200), random.uniform(0, 800),random.uniform(0.1, 1), random.uniform(0.1, 1), i))
 
 class laser(object):
-    def __init__(self):
-        global px, py, head, lhead
-        self.lx = px #PVector(px, py)
-        self.ly = py
-        self.go = PVector(20, 20)
-        #self.ly = py
+    def __init__(self, px_, py_):
+        global head, location, shoot
+        self.lx = location.x
+        self.ly = location.y
+        self.go = shoot
     def laser_show(self):
-        pushMatrix()
-        translate(0.01, 5)
-        rotate(radians(lhead))
         stroke(255, 0, 0)
         fill(255, 0, 0)
-        rect(self.lx, self.ly, 0.02, 10)
+        pushMatrix()
+        translate(self.lx, self.ly)
+        rotate(radians(head))
+        ellipse(0, 0, 5, 5)
         popMatrix()
     def laser_move(self):
-        # newV = self.l.add(self.go)
-        # return newV
         pass
 
+shoot = PVector(2, 0)
 class alien(object):
     def __init__(self):
         self.ax = 30 #random.randrange(-100, 1300)
@@ -185,29 +178,7 @@ def startscreen():
     title.play()
     
         
-def ship_move():
-    global speed_count, px, py, yspeed, xspeed
-    if speed_count > 20 and xspeed < 0:
-        xspeed += 0.5
-        speed_count = 0
-    elif speed_count > 20 and yspeed < 0:
-        yspeed += 0.5
-        speed_count = 0
-    elif speed_count > 20 and xspeed > 0:
-        xspeed -= 0.5
-        speed_count = 0
-    elif speed_count > 20 and yspeed > 0:
-        yspeed -= 0.5
-        speed_count = 0
-    if px < 0:
-        px = 1200
-    if py < 0:
-        py = 800
-    if py > 800:
-        py = 0
-    if px > 1200:
-        px = 0    
-        
+
         
 def mousePressed():
     global game_status
@@ -217,29 +188,13 @@ def mousePressed():
             
             
 def keyPressed():
-    global head, yspeed, ship, xspeed, speed_count, py, px, laservy, lser, lhead
-    if key == 'w' or keyCode == UP:
-        if yspeed > -5:
-            yspeed -= 0.5
-        if head < 0 or head > 0:
-            head += 3
-            lhead += 3
-        #xspeed -= 1
-    elif key == 'a' or keyCode == LEFT:
-        if xspeed > -3:
-            xspeed -= 0.5
-        if head > -90:
-            head -= 3
-            lhead -= 3
-    elif key == 'd' or keyCode == RIGHT:
-        if xspeed < 3:
-            xspeed += 0.5
-        if head < 90:
-            head += 3
-            lhead += 3
-    elif key == 's' or keyCode == DOWN:
-        if yspeed < 5:
-            yspeed += 0.5
+    global head, py, px, ship
+    if key == 'w':
+        ship.boost()
+    if key == 'd':
+        head += 0.1
+    if key == 'a':
+        head -= 0.1
     if key == 'p':
         lser.laser_show()
         lser.laser_move()
@@ -247,23 +202,52 @@ def keyPressed():
 
     
     
-    
-    
-    
+
+location = PVector(px, py)
+
+velocity = PVector(0, 0)
+force = PVector.fromAngle(head)
+
 class Player(object):
     def __init__(self, px, py):
-        self.x = px
-        self.y = py
+        global location, velocity
+        #self.x = px
+        #self.y = py
+        self.location = location
+        self.velocity = velocity
     
     def display(self):
         noFill()
         strokeWeight(5)
         stroke(255)
         pushMatrix()
-        translate(self.x, self.y)
-        rotate(radians(head))
+        translate(self.location.x, self.location.y)
+        rotate(head + PI/2)
         triangle(-10, 15, 0, -15, 10, 15)    
         popMatrix()
+    def update(self):
+        self.location.add(self.velocity)
+        self.velocity.mult(0.97)
+    
+    def boost(self):
+        force = PVector.fromAngle(head)
+        self.velocity.add(force)
+    
+    def col(self):
+        if self.location.x > width:
+            self.location.x = 0
+        elif self.location.x < 0:
+            self.location.x = 1200
+        
+        if self.location.y > height:
+            self.location.y = 0
+        elif self.location.y < 0:
+            self.location.y = 800
+
+
+
+
+        
 
 
 
