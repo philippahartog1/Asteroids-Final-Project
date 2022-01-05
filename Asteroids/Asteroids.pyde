@@ -8,14 +8,14 @@ head = 0
 lhead = 0
 px = 600
 py = 400
-
+laser_shot = False
 immune_count = 100
 
 life_count = 5
 
     
 def setup():
-    global startfont, ship, hit, title
+    global startfont, ship, hit, title, shot
     size(1200, 800)
     startfont = createFont("OCR A Extended", 16)
     print(startfont)
@@ -23,12 +23,13 @@ def setup():
     minim = Minim(this)
     hit = minim.loadSample("hitHurt.wav")
     title = minim.loadFile("astSong.mp3")
+    shot = minim.loadSample("laserShoot.wav")
 
 
 
 
 def draw():
-    global startfont, ship, speed_count, py, px, ship,  laservx, laservy, lser, immune_count, ax, ay, game_status, location, velocity, force
+    global startfont, ship, speed_count, py, px, ship, lser, immune_count, ax, ay, game_status, location, velocity, force, laserloc, laser_shot, laser_num, laser_list, shot
     background(0)
     if game_status == 1:
         startscreen()
@@ -38,27 +39,35 @@ def draw():
             astt[i].display()
             astt[i].collide()
         
-        al = alien()
-        al.alShow()
-        al.alMove()
+        # al = alien()
+        # al.alShow()
+        # al.alMove()
         ship = Player(px, py)
         ship.display()
         ship.update()
         ship.col()
-        lser = laser(px, py)
+        #lser = laser(px, py)
+        #lser.laser_update()
         immune_count += 1
         fill(255)
         textSize(30)
         text("Lives:", 50, 50)
         life = Life()
         life.show()
+        #lser = laser(px, py)
+        for i in range(laser_num):
+            laser_list.append(laser(location.x, location.y))
+        if laser_shot == True:
+            for i in range(laser_num):
+                laser_list[i].laser_show()
+                laser_list[i].laser_update()
+                laser_list[i].laser_move()
         #title.pause()
-        if life_count == 0:
+        if life_count == -1:
             game_status = 3
     if game_status == 3:
         background(0)
-
-        
+    
 
 class Life(object):
     def __init__(self):
@@ -112,10 +121,10 @@ class smallAst(asteroidMove):
     def collide(self):
         global px, py, asts, astt, life_count, immune_count
         for i in range(self.id, asts):
-            dx = self.x - location.x
-            dy = self.y - location.y
+            dx = self.x - location.x 
+            dy = self.y - location.y 
             dist_squared = dx * dx + dy * dy
-            if dist_squared < 500:
+            if dist_squared < 400:
                 if immune_count > 100:
                     life_count -=1
                     hit.trigger()
@@ -129,22 +138,26 @@ for i in range(asts):
 
 class laser(object):
     def __init__(self, px_, py_):
-        global head, location, shoot
-        self.lx = location.x
-        self.ly = location.y
+        global head, location, shoot, laserloc, head
+        laserloc = PVector(location.x, location.y)   
+        self.l = laserloc
         self.go = shoot
     def laser_show(self):
         stroke(255, 0, 0)
         fill(255, 0, 0)
         pushMatrix()
-        translate(self.lx, self.ly)
+        translate(self.l.x, self.l.y)
         rotate(radians(head))
         ellipse(0, 0, 5, 5)
         popMatrix()
+    def laser_update(self):
+        self.l.add(self.go)
+        self.go.mult(0.8)
     def laser_move(self):
-        pass
+        force = PVector.fromAngle(head)
+        self.go.add(force)
 
-shoot = PVector(2, 0)
+shoot = PVector(0, 0)
 class alien(object):
     def __init__(self):
         self.ax = 30 #random.randrange(-100, 1300)
@@ -177,9 +190,11 @@ def startscreen():
     rect(400, 550, 360, 60, 7)
     title.play()
     
-        
+    
+laser_num = 1
+laser_list = []
 
-        
+    
 def mousePressed():
     global game_status
     if game_status == 1:
@@ -188,7 +203,7 @@ def mousePressed():
             
             
 def keyPressed():
-    global head, py, px, ship
+    global head, py, px, ship, laser_shot, laser_num, shot
     if key == 'w':
         ship.boost()
     if key == 'd':
@@ -196,18 +211,19 @@ def keyPressed():
     if key == 'a':
         head -= 0.1
     if key == 'p':
-        lser.laser_show()
-        lser.laser_move()
+        laser_num += 1
+        laser_shot = True
+        shot.trigger()
             
 
-    
+  
     
 
 location = PVector(px, py)
 
 velocity = PVector(0, 0)
-force = PVector.fromAngle(head)
-
+# force = PVector.fromAngle(head)
+ 
 class Player(object):
     def __init__(self, px, py):
         global location, velocity
