@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-#hello world
-#test test 123
-#hi its my branch now
-=======
+
 #import libraries
 add_library('minim')
 import random
@@ -373,4 +369,3 @@ class Player(object):
         
         
     
->>>>>>> Philippa-code
