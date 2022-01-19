@@ -1,25 +1,25 @@
 add_library('minim')
 import random
+from Player import Player
 
 game_status = 1 #1 for start screen, 2 for playing, 3 for game over
-laservx = 0
-laservy = 0
+
 head = 0
-lhead = 0
+
 px = 600
 py = 400
 laser_shot = False
 immune_count = 100
 location = PVector(px, py)
 shoot = PVector(0, 0)
-shiploc = []
+
 velocity = PVector(0, 0)
 life_count = 5
 laser_num = 1
 laser_list = []
-    
+point_count = 0
 def setup():
-    global startfont, ship, hit, title, shot, location
+    global startfont, ship, hit, title, shot, location, explo
     size(1200, 800)
     startfont = createFont("OCR A Extended", 16)
     print(startfont)
@@ -28,19 +28,21 @@ def setup():
     hit = minim.loadSample("hitHurt.wav")
     title = minim.loadFile("astSong.mp3")
     shot = minim.loadSample("laserShoot.wav")
-    shot.shiftGain(shot.getGain(), 1, -200)
+    explo = minim.loadSample("explosion.wav")
+    
+
 
 
 
 
 
 def draw():
-    global startfont, ship, speed_count, py, px, ship, lser, immune_count, ax, ay, game_status, location, velocity, force, laserloc, laser_shot, laser_num, laser_list, shot, locposx, locposy, shiploc, asteroid
+    global startfont, ship, py, px, ship, lser, immune_count, game_status, location, velocity, force, laserloc, laser_shot, laser_num, laser_list, shot, locposx, locposy, asteroid, astt, point_count, explo
     background(0)
     if game_status == 1:
         startscreen()
     if game_status == 2:
-        for i in range(asts):
+        for i in range(len(astt)):
             astt[i].move()
             astt[i].display()
             astt[i].collide()
@@ -56,21 +58,27 @@ def draw():
         life = Life()
         life.show()
         laserloc = PVector(location.x, location.y) 
-
+        text(point_count, 600, 50)
 
         if laser_shot == True:
-            for i in range(len(laser_list)):
+            for i in reversed(range(len(laser_list))):
                 laser_list[i].laser_show()
                 laser_list[i].laser_update()
-                laser_list[i].laser_collide()
-            if len(shiploc) == 2:
-                shiploc.pop(0)
-
+                for j in reversed(range(len(astt))):
+                    if laser_list[i].laser_collide(astt[j]):
+                        if (astt[j].r > 10):
+                            newAsteroids = astt[j].ast_break()
+                            astt = astt + newAsteroids 
+                            astt.pop(j)
+                            laser_list.pop(i)
+                            point_count += 10
+                            explo.trigger()
+                            break
             
-        if life_count == -1:
+        if life_count == 0:
             game_status = 3
     if game_status == 3:
-        background(0)
+        endscreen()
     
 
     
@@ -89,32 +97,38 @@ class Life(object):
     
 
 class Asteroid(object):
-    def __init__(self, x1, y1, vx1, vy1, id):
+    def __init__(self, pos, r):
         global location
-        self.x = x1
-        self.y = y1
-        self.vx = vx1
-        self.vy = vy1
-        self.r = random.uniform(5, 40)
+        if (pos):
+            self.pos = pos.copy()
+        else:
+            self.pos = PVector(random.uniform(0,1200), random.uniform(0, 800))
+        self.vx = random.uniform(0.33, 1)
+        self.vy = random.uniform(0.33, 1)
+        self.r = 50
+        if (r):
+            self.r = self.r * 0.5
+        else:
+            self.r = random.uniform(15, 50)
         self.id = id
         self.sides = random.randint(5, 15)
         self.off = []
         for i in range(self.sides):
-            self.off.append(random.uniform(-5, 15))
+            self.off.append(random.uniform(-self.r* 0.5, self.r*0.5))
             
     def move(self):
-        self.x += self.vx
-        self.y += self.vy
-        if self.x > 1200 or self.x < 0:
+        self.pos.x += self.vx
+        self.pos.y += self.vy
+        if self.pos.x > 1200 or self.pos.x < 0:
             self.vx *= -1
-        if self.y > 800 or self.y < 0:
+        if self.pos.y > 800 or self.pos.y < 0:
             self.vy *= -1
     def display(self):
         pushMatrix()
         stroke(255)
         strokeWeight(2)
         noFill()
-        translate(self.x, self.y)
+        translate(self.pos.x, self.pos.y)
         beginShape()
         for i in range(self.sides):
             angle = map(i, 0, self.sides, 0, TWO_PI)
@@ -125,26 +139,34 @@ class Asteroid(object):
         popMatrix()
         
     def collide(self):
-        global px, py, asts, astt, life_count, immune_count, location
-        for i in range(self.id, asts):
-            dx = self.x - location.x 
-            dy = self.y - location.y 
-            dist_squared = dx * dx + dy * dy
-            if dist_squared < 400:
-                if immune_count > 100:
-                    life_count -=1
-                    hit.trigger()
-                    immune_count = 0
+        global hit, asts, astt, life_count, immune_count, location
+        dx = dist(self.pos.x, self.pos.y, location.x, location.y)
+        if (dx < self.r):
+            if immune_count > 100:
+                life_count -= 1
+                immune_count = 0
+                hit.trigger()
+                
+        else:
+            pass
+
+    def ast_break(self):
+        newAst = []
+        newAst.append(Asteroid(self.pos, self.r))
+        newAst.append(Asteroid(self.pos, self.r))
+        return newAst
+        
 
 
 asts = 10
 astt = []
 for i in range(asts):
-    astt.append(Asteroid(random.uniform(0,1200), random.uniform(0, 800),random.uniform(0.1, 1), random.uniform(0.1, 1), i))
+    astt.append(Asteroid(PVector(random.uniform(0, 1200), random.uniform(0, 800)), 40))
 
 class laser(Asteroid):
     def __init__(self, loc, angle):
-        global head, location, shoot, laserloc, head, velocity, force, shiploc, astt
+        global head, location, shoot, laserloc, head, velocity, force, astt
+        #super(laser, self).__init__()
         self.l = PVector(loc.x, loc.y)
         self.go = PVector.fromAngle(angle)
         self.go.mult(5)
@@ -156,11 +178,10 @@ class laser(Asteroid):
         popMatrix()
     def laser_update(self):
         self.l.add(self.go)
-    def laser_collide(self):
+    def laser_collide(self, asteroid):
         global laser_list, laser_num
-        d = dist(self.l.x, self.l.y, astt[i].x, astt[i].y)
-        if (d < astt[i].r):
-            print('owo')
+        d = dist(self.l.x, self.l.y, asteroid.pos.x, asteroid.pos.y)
+        if (d < asteroid.r):
             return True
         else:
             return False
@@ -186,34 +207,52 @@ def startscreen():
     title.play()
     
     
-
+def endscreen():
+    global startfont, point_count
+    background(0)
+    textFont(startfont)
+    textSize(175)
+    text("GAME OVER", 100, 200)
+    textSize(50)
+    text('Score:', 420, 300)
+    text(point_count, 620, 300)
+    for i in range(1,6):
+        if not(frameCount % i == 0):
+            textSize(20)
+            strokeWeight(5)
+            text("Click anywhere to play again", 420, 400)
 
     
 def mousePressed():
-    global game_status
+    global game_status, life_count, point_count, title, location, velocity, head
     if game_status == 1:
         if (mouseX > 400 and mouseX < 757) and (mouseY > 550 and mouseY < 605):
             game_status = 2
+    if game_status == 3:
+        game_status = 1
+        life_count = 5
+        point_count = 0
+        location.x = 600
+        location.y = 400
+        velocity.x = 0
+        velocity.y = 0
+        head = 0
+        title.loop()
             
             
 def keyPressed():
-    global head, py, px, ship, laser_shot, laser_num, shot, location, shiploc, laser_list, astt
-    if key == 'w':
+    global head, ship, laser_shot, laser_num, shot, location, laser_list, astt
+    if key == 'w' or key == 'W':
         ship.boost()
-    if key == 'd':
+    if key == 'd' or key == 'D':
         head += 0.1
-    if key == 'a':
+    if key == 'a' or key == 'A':
         head -= 0.1
-    if key == 'p':
+    if key == ' ':
         laser_num += 1
         laser_shot = True
         shot.trigger()
         laser_list.append(laser(location, head))
-
-
-            
-
-  
     
 
 
