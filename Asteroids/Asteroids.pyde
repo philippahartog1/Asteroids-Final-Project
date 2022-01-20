@@ -95,6 +95,7 @@ def draw():
                             break
                         else:
                             #if the size is smaller than 10 it removes the object from the list making it disapear 
+                            laser_list.pop(i)
                             astt.pop(j)
                             explo.trigger()
                             #adds 20 points because the smaller ones are harder to hit
@@ -103,6 +104,7 @@ def draw():
                             asts = 1
                             for x in range(asts):
                                  astt.append(Asteroid(PVector(random.uniform(0, 1200), random.uniform(0, 800)), 40))
+                            break
         #if the life counter is = 0 changes the game status and displays the endscreen   
         if life_count == 0:
             game_status = 3
@@ -273,7 +275,7 @@ def endscreen():
 
     
 def mousePressed():
-    global game_status, life_count, point_count, title, location, velocity, head, astt
+    global game_status, life_count, point_count, title, location, velocity, head, astt, laser_list
     if game_status == 1:
         #if 'play game' is pressed switches the games status to 2
         if (mouseX > 435 and mouseX < 795) and (mouseY > 550 and mouseY < 610):
@@ -290,6 +292,7 @@ def mousePressed():
         title.loop()
         #empties the list and then refills it with asteroids
         asts = 20
+        del laser_list[:]
         del astt[:]
         for i in range(asts):
             astt.append(Asteroid(PVector(random.uniform(0, 1200), random.uniform(0, 800)), 40))
